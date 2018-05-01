@@ -40,7 +40,17 @@ const run = async () => {
         }else if(mainMenuOption.mainMenuChoices == "View classifications"){
                 console.log(classifications)
         }else if(mainMenuOption.mainMenuChoices == "Test"){
+            var testingString = (await inquirer.testClassifier()).testClassifier;
+            console.log(testingString)
+            var guessClassifier = await classifier.classify(testingString);
+            var wasCorrectGuess = (await inquirer.questionClassifier(guessClassifier)).questionClassifier;
 
+            if(wasCorrectGuess){
+                classifier.addDocument(testingString, guessClassifier)
+            }else{
+                var correctClassifier = (await inquirer.corrrectClassifier(classifications,testingString)).corrrectClassifier;
+                classifier.addDocument(testingString, correctClassifier)
+            }
         }else if(mainMenuOption.mainMenuChoices == "Save training"){
             var saveAs = await inquirer.askForSaveName();
             var raw = JSON.stringify(classifier)
@@ -48,7 +58,6 @@ const run = async () => {
                 if(err) {
                     return console.log(err);
                 }
-
                 console.log("The classifier was saved!");
             });
         }else if(mainMenuOption.mainMenuChoices == "Load training"){
@@ -57,7 +66,9 @@ const run = async () => {
                 if (err) {
                     return console.log("UHOH!", err);
                 }else{
+                    console.log("Loaded the classifier")
                     classifier = natural.BayesClassifier.restore(JSON.parse(data))
+                    classifier.train();
                     classifier.docs.forEach(function (classifier){
                         if(classifications.find(function(label){return label == classifier.label}) == null){
                             classifications.push(classifier.label)
